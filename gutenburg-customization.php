@@ -1,50 +1,52 @@
 <?php
 /**
- * Plugin Name:      Gutenburg Customization
- * Plugin URI:       https://echorewards.pro
- * Description:       Customize Woocommerce cart and checkout pages
- * Version:           1.0.0
- * Author:            WPPOOL
- * Author URI:        https://echorewards.pro/
- * License:           GPL-2.0+
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:       gutenburg-customization
- * Domain Path: /languages/
- * Requires at least: 5.0
- * Tested up to:      6.5
- *
+ * Plugin Name: Checkout Block Example
  */
 
- function register_block_editor_scripts() {
-	$script_path       = '/build/index.js';
-	$script_url        = plugins_url( 'gutenburg-customization' . $script_path, __FILE__ );
+add_action('init', function () {
+    register_block_type(__DIR__);
+});
 
-	wp_register_script(
-		'gutenburg-custom-block-editor',
-		$script_url,
-		array( 'wc-blocks-checkout', 'wp-block-editor', 'wp-blocks', 'wp-components', 'wp-element', 'wp-i18n' ),
-		'1.0.0',
-		true
-	);
+add_action('woocommerce_blocks_checkout_block_registration', function ($integration_registry) {
+    $integration_registry->register(new Blocks_Integration());
+});
 
-	wp_enqueue_script( 'gutenburg-custom-block-editor' );
+class Blocks_Integration implements \Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface {
+    public function get_name() {
+        return 'checkout-block-example';
+    }
+
+    public function initialize() {}
+
+    public function get_script_handles() {
+        return ['checkout-block-frontend'];
+    }
+
+    public function get_editor_script_handles() {
+        return ['gift-message-block-editor'];
+    }
+
+    public function register_block_editor_scripts() {
+        wp_register_script(
+            'gift-message-block-editor',
+            plugins_url('build/index.js', __FILE__),
+            include plugin_dir_path(__FILE__) . 'build/index.asset.php',
+            true
+        );
+    }
+
+    public function register_block_frontend_scripts() {
+        wp_register_script(
+            'checkout-block-frontend',
+            plugins_url('build/frontend.js', __FILE__),
+            include plugin_dir_path(__FILE__) . 'build/frontend.asset.php',
+            true
+        );
+    }
 }
 
-function register_block_frontend_scripts() {
-	$script_path = '/build/frontend.js';
-	$script_url  = plugins_url( 'gutenburg-customization' . $script_path, __FILE__ );
 
-	wp_register_script(
-		'gutenburg-custom-frontend',
-		$script_url,
-		array( 'wc-blocks-checkout', 'wp-element', 'wp-i18n' ),
-		'1.0.0',
-		true
-	);
-
-	wp_enqueue_script( 'gutenburg-custom-frontend' );
-}
-
-
-add_action( 'enqueue_block_editor_assets', 'register_block_editor_scripts' );
-add_action( 'wp_enqueue_scripts', 'register_block_frontend_scripts' );
+add_action('woocommerce_store_api_checkout_update_order_from_request', function ($order, $request) {
+    $data = $request['extensions']['checkout-block-example'] ?? [];
+    $order->update_meta_data('Gift Message', $data['gift_message']);
+}, 10, 2);

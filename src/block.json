@@ -7,14 +7,15 @@
     "category": "woocommerce",
     "parent": [ "woocommerce/checkout-shipping-address-block" ],
     "attributes": {
-        "lock": {
-            "type": "object",
-            "default": {
-                "remove": true,
-                "move": true
-            }
+      "lock": {
+        "type": "object",
+        "default": {
+          "remove": true,
+          "move": true
         }
+      }
     },
     "textdomain": "checkout-block-example",
     "editorScript": "file:./build/index.js"
-}
+  }
+  
